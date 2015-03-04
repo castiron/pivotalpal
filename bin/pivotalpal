@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require 'Pivotalpal/cli'
+Pivotalpal::CLI.start
