@@ -19,7 +19,7 @@ module Pivotalpal
             column('ITER. LENGTH', :width => 8)
           end
           client = Pivotalpal::Factory::PTClient::get
-          projects = client.projects
+          projects = client.projects.sort_by {|v| v.name}
           projects.each do |project|
             owners = project.memberships.select { |m| m.role == 'owner' }.map { |m| m.person.initials }.join(', ')
             row do
@@ -41,7 +41,7 @@ module Pivotalpal
             column('ROLE', :width => 10)
           end
           client = Pivotalpal::Factory::PTClient::get
-          projects = client.me.projects
+          projects = client.me.projects.sort_by {|v| v.project_name}
           owner_projects = projects.select { |p| p.role == 'owner' }
           owner_projects.each do |project|
             row do
