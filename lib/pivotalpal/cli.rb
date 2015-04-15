@@ -23,7 +23,11 @@ module Pivotalpal
       Pivotalpal::Reports::Projects.new.all
     end
 
-
+    desc "all_backlogs", "List number of stories in backlogs per member"
+    def all_backlogs
+      proj = ask("Which project's backlog count would you like to see?")
+      Pivotalpal::Reports::Projects.new.backlog(proj)
+    end
 
   end
 

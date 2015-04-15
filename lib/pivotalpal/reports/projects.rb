@@ -34,6 +34,36 @@ module Pivotalpal
 
       end
 
+      def backlog(proj)
+        # header(:title => who.upcase, :color => 'red')
+        # table(:border => true) do
+        #   row do
+        #     column('PROJECT', :width => 40)
+        #     column('# Of BACKLOGS', :width => 15)
+        #   end
+        client = Pivotalpal::Factory::PTClient::get
+        projects = client.projects.sort_by{|v| v.name}
+        projects.each do |project|
+          if project.name.downcase == proj
+            header(:title => project.name, :align => 'center', :color => 'red')
+            table(:border => true) do
+              row do
+                column('MEMBER', :width => 10)
+                column('# of BACKLOGS', :width => 15)
+              end
+
+              members = project.memberships.select { |m| m.role == 'member' }.map { |m| m.person.initials }.join(',')
+              members.split(",").each do |member|
+                row do
+                  column(member.upcase)
+                  column(project.stories(:filter => 'state:unstarted', :filter => "owner:#{member.upcase}").length)
+                end
+              end
+            end
+          end
+        end
+    end
+
       def mine
         table(:border => true) do
           row do
