@@ -25,8 +25,8 @@ module Pivotalpal
             row do
               column(project.name)
               column(owners)
-              column('')
-              column('')
+              column(project.stories(:filter => 'state:unstarted').length)
+              column(project.stories(:filter => 'state:unscheduled').length)
               column(project.iteration_length)
             end
           end
