@@ -23,21 +23,22 @@ module Pivotalpal
       Pivotalpal::Reports::Projects.new.all
     end
 
-    desc "single_backlog", "Shows a report of total backlogs per member for a single project"
-    def single_backlogs
+    desc "backlog_single", "Single project backlog by user"
+    def backlog_singles
       proj = ask("Which project's backlog count would you like to see?")
-      Pivotalpal::Reports::Projects.new.single_backlog(proj)
+      Pivotalpal::Reports::Projects.new.backlog_single(proj)
     end
 
+    # To ease single backlog lookup input
     desc "list_projects", "List all projects"
     def list_projects
       Pivotalpal::Reports::Projects.new.list_projects
     end
 
-    desc "get_members", "Lists all members of all projects"
-    def get_members
-      Pivotalpal::Reports::Projects.new.get_members
-    end
+    # desc "backlog_all", "All project backlogs by user"
+    # def backlog_all
+    #     Pivotalpal::Reports::Projects.new.backlog_all
+    # end
 
   end
 
