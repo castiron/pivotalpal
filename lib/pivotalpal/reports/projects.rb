@@ -13,7 +13,8 @@ module Pivotalpal
         table(:border => true) do
           row do
             column('PROJECT', :width => 40, :color => 'white')
-            column('OWNER', :width => 10, :color => 'white')
+            column('OWNER', :width => 8, :color => 'white')
+            column('CURRENT', :width => 8, :color => 'white')
             column('BACKLOG', :width => 8, :color => 'white')
             column('ICEBOX', :width => 8, :color => 'white')
             column('ITER. LENGTH', :width => 8, :color => 'white')
@@ -22,11 +23,17 @@ module Pivotalpal
           projects = client.projects.sort_by {|v| v.name}
           projects.each do |project|
             owners = project.memberships.select { |m| m.role == 'owner' }.map { |m| m.person.initials }.join(', ')
+            current = project.stories(:filter => "state:planned")
             backlogs = project.stories(:filter => 'state:unstarted')
             iceboxes = project.stories(:filter => 'state:unscheduled')
             row do
-              column(project.name, :color => 'red')
+              column(project.name, :color => 'cyan')
               column(owners, :color => 'yellow')
+              if current.length == 0
+                column(current.length, :color => 'white')
+              else
+                column(current.length, :color => 'red')
+              end
               if backlogs.length == 0 # Easy to weed out 0s from substantial tallies
                 column(backlogs.length, :color => 'white')
               else
@@ -35,9 +42,9 @@ module Pivotalpal
               if iceboxes.length == 0
                 column(iceboxes.length, :color => 'white')
               else
-                column(iceboxes.length, :color => 'red')
+                column(iceboxes.length, :color => 'yellow')
               end
-              column(project.iteration_length)
+              column(project.iteration_length, :color => 'red')
             end
           end
         end
