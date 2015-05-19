@@ -9,8 +9,20 @@ module Pivotalpal
 
       include CommandLineReporter
 
+      def init_client()
+        @client = Pivotalpal::Factory::PTClient::get
+        @projects = @client.projects.sort_by {|v| v.name}
+      end
+
+      def color_columns(state)
+        return state.length == 0 ? column(state.length, :color => 'white') : column(state.length, :color => 'red')
+      end
+
+
       def all
+        init_client()
         table(:border => true) do
+
           row do
             column('PROJECT', :width => 40, :color => 'white')
             column('OWNER', :width => 8, :color => 'white')
@@ -19,9 +31,8 @@ module Pivotalpal
             column('ICEBOX', :width => 8, :color => 'white')
             column('ITER. LENGTH', :width => 8, :color => 'white')
           end
-          client = Pivotalpal::Factory::PTClient::get
-          projects = client.projects.sort_by {|v| v.name}
-          projects.each do |project|
+
+          @projects.each do |project|
             owners = project.memberships.select { |m| m.role == 'owner' }.map { |m| m.person.initials }.join(', ')
             current = project.stories(:filter => "state:planned")
             backlogs = project.stories(:filter => 'state:unstarted')
@@ -29,21 +40,9 @@ module Pivotalpal
             row do
               column(project.name, :color => 'cyan')
               column(owners, :color => 'yellow')
-              if current.length == 0
-                column(current.length, :color => 'white')
-              else
-                column(current.length, :color => 'red')
-              end
-              if backlogs.length == 0 # Easy to weed out 0s from substantial tallies
-                column(backlogs.length, :color => 'white')
-              else
-                column(backlogs.length, :color => 'cyan')
-              end
-              if iceboxes.length == 0
-                column(iceboxes.length, :color => 'white')
-              else
-                column(iceboxes.length, :color => 'yellow')
-              end
+              color_columns(current)
+              color_columns(backlogs)
+              color_columns(iceboxes)
               column(project.iteration_length, :color => 'red')
             end
           end
@@ -52,100 +51,100 @@ module Pivotalpal
       end
 
       def get_project(proj)
-        client = Pivotalpal::Factory::PTClient::get
-        projects = client.projects.sort_by {|v| v.name}
-        projects.each do |project|
+        init_client()
+        @projects.each do |project|
           if project.name.downcase == proj.downcase
-            return project
+            project_query = project
+            return project_query
           end
         end
-        false
+        header(:title => "That projjy ain't found! (Run 'list_projects' to see proper project titles)", :color => 'red')
+        exit
       end
 
-      def backlog_single(proj)
-        if get_project(proj)
-          @project_query = get_project(proj)
-        else
-          header(:title => "That projjy ain't found! (Run 'list_projects' to see proper project titles)", :color => 'red')
-        end
+      def project_single(proj)
+        project = get_project(proj)
 
-        if defined? @project_query
-          backlog_total = 0
-          header(:title => @project_query.name,
-                 :align => 'center',
-                 :color => 'red',
-                 :bold => true,
-                 :rule => true,
-                 :width => 40)
+        backlog_total = 0
+        current_total = 0
+        icebox_total = 0
+        owners = project.memberships.select { |m| m.role == 'owner' }.map { |m| m.person.initials }.join(', ')
+        members = project.memberships.select { |m| m.role == 'member' || m.role == 'owner' }.map { |m| m.person.initials }.join(',')
 
-          table(:border => true) do
-            row do
-              column('MEMBER', :width => 10, :color => 'white')
-              column('# of BACKLOGS', :width => 15, :color => 'white')
-            end
+        header(:title => project.name,
+               :align => 'center',
+               :color => 'red',
+               :bold => true,
+               :rule => true,
+               :width => 67)
 
-            members = @project_query.memberships.select { |m| m.role == 'member' || m.role == 'owner' }.map { |m| m.person.initials }.join(',')
-            members.split(",").each do |member|
-              backlog_count = @project_query.stories(:filter => "state:unstarted owner:#{member.upcase}").length
-              if backlog_count == 0
-                row do
-                  column(member.upcase, :color => 'yellow')
-                  column(backlog_count, :color => 'white')
-                end
+        header(:title => "OWNERS: #{owners}",
+               :align => 'center',
+               :color => 'magenta',
+               :width => 67)
 
-              else
-                row do
-                  column(member.upcase, :color => 'yellow')
-                  column(backlog_count, :color => 'cyan')
-                end
-              end
-              backlog_total += backlog_count
-            end
-            row do
-              column('TOTAL', :color => 'red')
-              column(backlog_total, :color => 'red')
-            end
+        table(:border => true) do
+
+          row do
+            column('MEMBER', :width => 10, :color => 'white')
+            column('# of CURRENT', :width => 15, :color => 'white')
+            column('# of BACKLOGGED', :width => 15, :color => 'white')
+            column('# of ICEBOXED', :width => 15, :color => 'white')
           end
+
+          members.split(",").each do |member|
+            current =  project.stories(:filter => "state:planned owner:#{member.upcase}")
+            backlog =  project.stories(:filter => "state:unstarted owner:#{member.upcase}")
+            icebox =  project.stories(:filter =>  "state:unscheduled owner:#{member.upcase}")
+
+            row do
+              column(member.upcase, :color => 'yellow')
+              color_columns(current)
+              color_columns(backlog)
+              color_columns(icebox)
+            end
+
+            current_total += current.length
+            backlog_total += backlog.length
+            icebox_total += icebox.length
+          end
+
+          row do
+            column('TOTAL', :color => 'magenta')
+            column(current_total, :color => 'magenta')
+            column(backlog_total, :color => 'magenta')
+            column(icebox_total,  :color => 'magenta')
+          end
+
         end
-
-    end
-
-    def backlog_all
-      client = Pivotalpal::Factory::PTClient::get
-      projects = client.projects.sort_by {|v| v.name}
-      projects.each do |project|
-        backlog_single(project.name)
-      end
     end
 
     def list_projects
       output = []
-      client = Pivotalpal::Factory::PTClient::get
-      projects = client.projects.sort_by{|v| v.name}
-      projects.each do |project|
+      init_client()
+      @projects.each do |project|
         output.push(project.name)
       end
       puts output.join(', ')
     end
 
-
-      def mine
-        table(:border => true) do
+    def mine
+      init_client()
+      table(:border => true) do
+        row do
+          column('PROJECT', :width => 40)
+          column('ROLE', :width => 10)
+        end
+        projects = @client.me.projects.sort_by {|v| v.project_name}
+        owner_projects = projects.select { |p| p.role == 'owner' }
+        owner_projects.each do |project|
           row do
-            column('PROJECT', :width => 40)
-            column('ROLE', :width => 10)
-          end
-          client = Pivotalpal::Factory::PTClient::get
-          projects = client.me.projects.sort_by {|v| v.project_name}
-          owner_projects = projects.select { |p| p.role == 'owner' }
-          owner_projects.each do |project|
-            row do
-              column(project.project_name)
-              column(project.role)
-            end
+            column(project.project_name)
+            column(project.role)
           end
         end
       end
+    end
 
     end
   end

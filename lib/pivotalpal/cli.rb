@@ -23,10 +23,10 @@ module Pivotalpal
       Pivotalpal::Reports::Projects.new.all
     end
 
-    desc "backlog_single", "Single project backlog by user"
-    def backlog_singles
+    desc "project_single", "Single project backlog by user"
+    def project_single
       proj = ask("Which project's backlog count would you like to see?")
-      Pivotalpal::Reports::Projects.new.backlog_single(proj)
+      Pivotalpal::Reports::Projects.new.project_single(proj)
     end
 
     # To ease single backlog lookup input
