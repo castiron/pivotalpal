@@ -35,6 +35,12 @@ module Pivotalpal
       Pivotalpal::Reports::Projects.new.list_projects
     end
 
+    desc '--version', 'Ouputs version information'
+    def version
+      puts "#{Pivotalpal::VERSION}"
+    end
+    map '-v' => :version, '--version' => :version
+
     # desc "backlog_all", "All project backlogs by user"
     # def backlog_all
     #     Pivotalpal::Reports::Projects.new.backlog_all
