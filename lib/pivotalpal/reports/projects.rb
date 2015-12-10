@@ -12,6 +12,7 @@ module Pivotalpal
       def init_client()
         @client = Pivotalpal::Factory::PTClient::get
         @projects = @client.projects.sort_by {|v| v.name}
+        @me = @client.me
       end
 
       def color_columns(state)
@@ -126,6 +127,49 @@ module Pivotalpal
         output.push(project.name)
       end
       puts output.join(', ')
+    end
+
+    def my_stories
+      init_client()
+      started_stories = []
+      unstarted_stories = []
+      @client.projects.each do |project|
+        started_stories_data = project.stories(filter: "owned_by:#{@me.initials} current_state:started")
+        unstarted_stories_data = project.stories(filter: "owned_by:#{@me.initials} current_state:unstarted")
+        started_stories_data.each do |story|
+          started_stories.push(story)
+        end
+        unstarted_stories_data.each do |story|
+          unstarted_stories.push(story)
+        end
+      end
+      total = started_stories.zip unstarted_stories
+
+      header(:title => "#{@me.name}'s Unfinished Stories",
+             :align => 'center',
+             :color => 'red',
+             :bold => true,
+             :rule => true,
+             :width => 150)
+
+      table(:border => true) do
+
+        row do
+          column('STARTED STORIES', :width => 50, :color => 'white')
+          column('ID', :width => 12, :color => 'red')
+          column('UNSTARTED STORIES', :width => 50, :color => 'white')
+          column('ID', :width => 12, :color => 'red')
+        end
+
+        total.each do |start_story, unstart_story|
+          row do
+            column(start_story.name, :width => 50, :color => 'magenta')
+            column("[##{start_story.id.to_s}]", :width => 12, :color => 'magenta')
+            column(unstart_story.name, :width => 50, :color => 'yellow')
+            column("[##{unstart_story.id.to_s}]", :width => 12, :color => 'yellow')
+          end
+        end
+      end
     end
 
     def mine

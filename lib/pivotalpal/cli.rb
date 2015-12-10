@@ -35,6 +35,11 @@ module Pivotalpal
       Pivotalpal::Reports::Projects.new.list_projects
     end
 
+    desc "my_stories", "Lists all stories that belong to you"
+    def my_stories
+      Pivotalpal::Reports::Projects.new.my_stories
+    end
+
     desc '--version', 'Ouputs version information'
     def version
       puts "#{Pivotalpal::VERSION}"
