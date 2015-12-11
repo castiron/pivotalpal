@@ -143,30 +143,47 @@ module Pivotalpal
           unstarted_stories.push(story)
         end
       end
-      total = started_stories.zip unstarted_stories
+      started_stories = started_stories.sort { |x, y| x.created_at <=> y.created_at }
+      unstarted_stories = unstarted_stories.sort { |x, y| x.created_at <=> y.created_at }
 
       header(:title => "#{@me.name}'s Unfinished Stories",
              :align => 'center',
              :color => 'red',
              :bold => true,
              :rule => true,
-             :width => 150)
+             :width => 110)
 
       table(:border => true) do
 
-        row do
-          column('STARTED STORIES', :width => 50, :color => 'white')
+        row(:bold => true) do
+          column('STARTED STORIES', :width => 50, :color => 'green')
           column('ID', :width => 12, :color => 'red')
-          column('UNSTARTED STORIES', :width => 50, :color => 'white')
-          column('ID', :width => 12, :color => 'red')
+          column('DATE CREATED (OLDEST TO NEWEST)', :width => 32, :color => 'cyan')
         end
 
-        total.each do |start_story, unstart_story|
+        started_stories.each do |start_story|
           row do
-            column(start_story.name, :width => 50, :color => 'magenta')
-            column("[##{start_story.id.to_s}]", :width => 12, :color => 'magenta')
-            column(unstart_story.name, :width => 50, :color => 'yellow')
-            column("[##{unstart_story.id.to_s}]", :width => 12, :color => 'yellow')
+            column("[#{@client.project(start_story.project_id).name.upcase}] #{start_story.name}", :width => 50, :color => 'green')
+            column("[##{start_story.id.to_s}]", :width => 12, :color => 'red')
+            column(start_story.created_at.strftime("%m-%d-%Y at %I:%M%p"), :width => 32, :color => 'cyan')
+          end
+        end
+      end
+
+      vertical_spacing(2)
+
+      table(:border => true) do
+        row(:bold => true) do
+          column('UNSTARTED STORIES', :width => 50, :color => 'yellow')
+          column('ID', :width => 12, :color => 'magenta')
+          column('DATE CREATED (OLDEST TO NEWEST)', :width => 32, :color => 'blue')
+        end
+
+        unstarted_stories.each do |unstart_story|
+          row do
+            column("[#{@client.project(unstart_story.project_id).name.upcase}] #{unstart_story.name}", :width => 50, :color => 'yellow')
+            column("[##{unstart_story.id.to_s}]", :width => 12, :color => 'magenta')
+            column(unstart_story.created_at.strftime("%m-%d-%Y at %I:%M%p"), :width => 32, :color => 'blue')
           end
         end
       end
