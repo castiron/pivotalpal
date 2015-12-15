@@ -1,6 +1,6 @@
 require 'tracker_api'
 require 'command_line_reporter'
-require 'PP'
+require 'pp'
 require 'pivotalpal/factory/pt_client'
 
 module Pivotalpal
